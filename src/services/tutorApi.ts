@@ -80,31 +80,47 @@ export const fetchCourses = async (
     const data = await response.json();
     console.log('API Response data:', data);
     
-    // Handle different response formats
-    // Tutor LMS returns an array of courses directly
+    // Handle different response formats from Tutor LMS API
+    
+    // Format 1: Direct array of courses
     if (Array.isArray(data)) {
       return {
         courses: data,
         total: data.length,
         total_pages: 1,
       };
-    } else if (data.data && Array.isArray(data.data)) {
-      // Handle if wrapped in data property
+    } 
+    
+    // Format 2: Wrapped in data.posts (Tutor LMS v2.x standard format)
+    if (data.data && data.data.posts && Array.isArray(data.data.posts)) {
+      return {
+        courses: data.data.posts,
+        total: data.data.total_course || data.data.posts.length,
+        total_pages: data.data.total_page || 1,
+      };
+    }
+    
+    // Format 3: Wrapped in data property as array
+    if (data.data && Array.isArray(data.data)) {
       return {
         courses: data.data,
         total: data.total || data.data.length,
         total_pages: data.total_pages || 1,
       };
-    } else if (data.courses) {
+    } 
+    
+    // Format 4: Direct courses property
+    if (data.courses) {
       return data;
-    } else {
-      console.warn('Unexpected API response format:', data);
-      return {
-        courses: [],
-        total: 0,
-        total_pages: 0,
-      };
-    }
+    } 
+    
+    // Unknown format
+    console.warn('Unexpected API response format:', data);
+    return {
+      courses: [],
+      total: 0,
+      total_pages: 0,
+    };
   } catch (error) {
     console.error('Error fetching courses from Tutor LMS:', error);
     if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
