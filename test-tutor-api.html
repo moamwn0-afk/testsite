@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutor LMS API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        button {
+            background: #0066cc;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin: 20px auto;
+        }
+        button:hover {
+            background: #0052a3;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #0066cc;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: left;
+        }
+        .error {
+            background: #fff3f3;
+            border-left-color: #ff0000;
+            color: #cc0000;
+        }
+        .success {
+            background: #f0fff4;
+            border-left-color: #00cc00;
+            color: #006600;
+        }
+        .course-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: white;
+        }
+        .course-card h3 {
+            margin: 0 0 10px 0;
+            color: #0066cc;
+        }
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .info-box h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Tutor LMS API Connection Test</h1>
+        
+        <div class="info-box">
+            <h3>📋 Test Information</h3>
+            <p><strong>API URL:</strong> https://abkadrow.online/wp-json/tutor/v1/courses</p>
+            <p><strong>Method:</strong> GET with Basic Authentication</p>
+            <p><strong>Expected:</strong> JSON array of courses</p>
+        </div>
+        
+        <button onclick="testConnection()">اختبر الاتصال بالـ API</button>
+        <button onclick="testWithoutAuth()" style="background: #cc6600;">اختبر بدون مصادقة</button>
+        
+        <div id="result"></div>
+        
+        <div id="courses"></div>
+    </div>
+
+    <script>
+        const API_KEY = 'key_192539345d74a9bdef67a8afa3521ac9';
+        const API_SECRET = 'secret_3b6117505d07762b3151969bbf17970261ed340c5577ad67b23091ddd803405a';
+        const API_URL = 'https://abkadrow.online/wp-json/tutor/v1/courses';
+        const authHeader = 'Basic ' + btoa(API_KEY + ':' + API_SECRET);
+
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            const coursesDiv = document.getElementById('courses');
+            
+            resultDiv.innerHTML = '⏳ جاري الاتصال بالـ API...';
+            resultDiv.className = '';
+            coursesDiv.innerHTML = '';
+            
+            try {
+                console.log('Testing API with auth header:', authHeader.substring(0, 20) + '...');
+                
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': authHeader,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    mode: 'cors',
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}\n${errorText}`);
+                }
+
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                // Display results
+                resultDiv.className = 'success';
+                resultDiv.innerHTML = `✅ نجح الاتصال!\n\n`;
+                resultDiv.innerHTML += `عدد الكورسات: ${Array.isArray(data) ? data.length : 'غير معروف'}\n\n`;
+                resultDiv.innerHTML += `البيانات الكاملة:\n${JSON.stringify(data, null, 2)}`;
+
+                // Display courses
+                if (Array.isArray(data) && data.length > 0) {
+                    coursesDiv.innerHTML = '<h2>الكورسات المتاحة:</h2>';
+                    data.forEach(course => {
+                        const title = course.title?.rendered || course.title || 'بدون عنوان';
+                        const link = course.link || '#';
+                        const price = course.tutor_course_regular_price || 'مجاني';
+                        
+                        coursesDiv.innerHTML += `
+                            <div class="course-card">
+                                <h3>${title}</h3>
+                                <p><strong>السعر:</strong> ${price}</p>
+                                <p><strong>الرابط:</strong> <a href="${link}" target="_blank">${link}</a></p>
+                            </div>
+                        `;
+                    });
+                } else if (data.data && Array.isArray(data.data)) {
+                    coursesDiv.innerHTML = '<h2>الكورسات المتاحة:</h2>';
+                    data.data.forEach(course => {
+                        const title = course.title?.rendered || course.title || 'بدون عنوان';
+                        const link = course.link || '#';
+                        const price = course.tutor_course_regular_price || 'مجاني';
+                        
+                        coursesDiv.innerHTML += `
+                            <div class="course-card">
+                                <h3>${title}</h3>
+                                <p><strong>السعر:</strong> ${price}</p>
+                                <p><strong>الرابط:</strong> <a href="${link}" target="_blank">${link}</a></p>
+                            </div>
+                        `;
+                    });
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.className = 'error';
+                
+                if (error.message.includes('Failed to fetch')) {
+                    resultDiv.innerHTML = `❌ فشل الاتصال!\n\n`;
+                    resultDiv.innerHTML += `الخطأ: لا يمكن الوصول إلى الـ API\n\n`;
+                    resultDiv.innerHTML += `الأسباب المحتملة:\n`;
+                    resultDiv.innerHTML += `1. مشكلة في CORS - يجب إضافة CORS headers في WordPress\n`;
+                    resultDiv.innerHTML += `2. الموقع غير متاح أو محمي بجدار ناري\n`;
+                    resultDiv.innerHTML += `3. SSL/HTTPS مشكلة في الشهادة\n\n`;
+                    resultDiv.innerHTML += `التفاصيل الكاملة:\n${error.message}`;
+                } else {
+                    resultDiv.innerHTML = `❌ حدث خطأ!\n\n${error.message}`;
+                }
+            }
+        }
+
+        async function testWithoutAuth() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '⏳ جاري الاختبار بدون مصادقة...';
+            resultDiv.className = '';
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    mode: 'cors',
+                });
+
+                const data = await response.json();
+                
+                resultDiv.className = response.ok ? 'success' : 'error';
+                resultDiv.innerHTML = `الحالة: ${response.status} ${response.statusText}\n\n`;
+                resultDiv.innerHTML += JSON.stringify(data, null, 2);
+                
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `❌ خطأ:\n${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
